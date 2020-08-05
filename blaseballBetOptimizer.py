@@ -3,44 +3,49 @@ import math
 import numpy
 
 # Manually enter the winning odds for each game, your number of coins, and your current max bet
-gameOdds = [61,66, 68, 57, 63, 54, 58, 50, 59, 62] 
-coins = 546
-currentMaxBet = 60 
-
-# Favor games between high, med , low
-gameRank = ["Unranked"] * len(gameOdds)
-for game in range(0,len(gameOdds)):
-    if gameOdds[game] >= 65:
-        gameRank[game] = "High"
-    elif 55 < gameOdds[game] < 65:
-        gameRank[game] = "Mid"
-    elif 50 <= gameOdds[game] <= 55:
-        gameRank[game] = "Low"
-numberHighRanks = gameRank.count('High')
-# if numberHighRanks == 1:
-#     print('There is {0} high favor game'.format(numberHighRanks))
-# elif numberHighRanks > 1:
-#     print('There are {0} high favor games'.format(numberHighRanks))
+gameOdds = [63, 55, 59, 55, 51, 69, 72, 53, 60, 72] 
+coins = 1414
+currentMaxBet = 200
+minBet = 0.05
 
 # Determine game-set bet order, so high games get max bid
 gameOrder = numpy.argsort(gameOdds)
 gameOrder = gameOrder[::-1]
-# print('Bet in this order: ' + str(gameOrder + 1))
 gameSorted = sorted(gameOdds)
+#print("\nGame order is: " + str(gameOrder + 1))
 
 # Now we decide how much to put in each game
 gameBets = ['0'] * len(gameOdds)
 totalCoins = coins
-for game in range(0,len(gameOdds)):
-    gameBets[game] = math.floor( currentMaxBet * ((0.3065*math.log1p(gameOdds[game] - 50)) + 0.15))
-    if gameBets[game] > currentMaxBet:
-        gameBets[game] = currentMaxBet
+gameBetsSortedBeg = ['0'] * len(gameOdds)
+# Determining bet amounts here
+logCoEf = (1 - minBet)/(math.log1p(65-49))
+for index in range(0,len(gameOdds)):
+    gameBets[index] = math.floor( currentMaxBet * ((logCoEf*math.log1p(gameOdds[index] - 50)) + minBet))
+    if gameBets[index] > currentMaxBet:
+        gameBets[index] = currentMaxBet
 gameBetsSorted = sorted(gameBets, reverse = True)
 
-for game in range(0, len(gameOdds)):
-    totalCoins -= gameBetsSorted[game]
-    if totalCoins <= 0:
-        gameBetsSorted[game] = 'Beg'
-# print('With these amounts: ' + str(gameBetsSorted))
+#print('Total coins starts at: ' + str(totalCoins))
+for index in range(0, len(gameOdds)):
+    if totalCoins < gameBetsSorted[index]:
+        gameBetsSortedBeg[index] = totalCoins
+        gameBetsSorted[index] = totalCoins
+    if (totalCoins) <= 0:
+        gameBetsSortedBeg[index] = 'Beg'
+    totalCoins -= gameBetsSorted[index]
+    #print('Total coins is now: ' + str(totalCoins))
+   
 
-print("\nIn order, bet these amounts: " + str(gameBets))
+# print('Sorted game bets are: ' + str(gameBetsSorted))
+# print('Sorted games with begging are: ' + str(gameBetsSortedBeg))
+# print("In order, bet these amounts: " + str(gameBets))
+
+print('\nGame\tOdds\tBet')
+print('|||||||||||||||||||')
+for index in range(0,len(gameOdds)):
+    if gameBetsSortedBeg[index] == 'Beg':
+        gameBetsSorted[index] = gameBetsSortedBeg[index]
+        print(f"{gameOrder[index] + 1}" +"\t"+ f"{gameOdds[gameOrder[index]]}" + '\t' + f"{gameBetsSorted[index]}")
+    else:
+        print(f"{gameOrder[index] + 1}" +"\t"+ f"{gameOdds[gameOrder[index]]}" + '\t' + f"{gameBetsSorted[index]}")
